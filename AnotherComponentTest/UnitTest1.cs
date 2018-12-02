@@ -11,7 +11,7 @@ namespace KooR.AnotherComponentTest
     public class UnitTest1
     {
 
-        [TestMethod]
+        [TestMethod, TestCategory("CI")]
         public void TestDoSomething_ManualMock()
         {
             ISecurityManager securityManager = new SecurityManagerMock();
@@ -25,7 +25,7 @@ namespace KooR.AnotherComponentTest
             Assert.IsTrue(component.State);
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("CI")]
         public void TestDoSomething_AutoMock()
         {
             // --- Create a Mock with NSubstitute (http://nsubstitute.github.io/) ---

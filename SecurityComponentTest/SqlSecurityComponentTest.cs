@@ -9,7 +9,7 @@ namespace SecurityComponentTest
     [TestClass]
     public class SqlSecurityComponentTest
     {
-        [TestMethod]
+        [TestMethod, TestCategory("CI")]
         public void TestGoodLogin()
         {
             string connectionString = "Data Source = localhost; Initial Catalog = SecurityComponent; Integrated Security = True";
