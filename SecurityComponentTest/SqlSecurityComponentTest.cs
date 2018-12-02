@@ -9,23 +9,43 @@ namespace SecurityComponentTest
     [TestClass]
     public class SqlSecurityComponentTest
     {
-        [TestMethod, TestCategory("CI")]
+        private const string connectionString = "Data Source = localhost; Initial Catalog = SecurityComponent; Integrated Security = True";
+        private SqlConnection connection;
+
+        [TestInitialize]
+        public void SetUp()
+        {
+            connection = new SqlConnection(connectionString);
+        }
+
+        [TestCleanup]
+        public void TearDown()
+        {
+            connection.Close();
+        }
+
+        [TestMethod]
         public void TestGoodLogin()
         {
-            string connectionString = "Data Source = localhost; Initial Catalog = SecurityComponent; Integrated Security = True";
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                ISecurityManager securityManager = new SqlSecurityManager(connection);
-                securityManager.OpenSession();
-                IUserManager userManager = securityManager.UserManager;
-                User user = userManager.CheckCredentials("root", "admin");
-                securityManager.Close();
+            ISecurityManager securityManager = new SqlSecurityManager(connection);
+            securityManager.OpenSession();
+            IUserManager userManager = securityManager.UserManager;
+            User user = userManager.CheckCredentials("root", "admin");
+            securityManager.Close();
 
-                Assert.AreEqual("root", user.Login);
-                Assert.IsFalse(user.Disabled);
-                Assert.AreEqual(0u, user.ConsecutiveErrors);
-            }
+            Assert.AreEqual("root", user.Login);
+            Assert.IsFalse(user.Disabled);
+            Assert.AreEqual(0u, user.ConsecutiveErrors);
+        }
 
+        [TestMethod, ExpectedException(typeof(BadCredentialsException))]
+        public void TestBadLogin()
+        {
+            ISecurityManager securityManager = new SqlSecurityManager(connection);
+            securityManager.OpenSession();
+            IUserManager userManager = securityManager.UserManager;
+            User user = userManager.CheckCredentials("Johnny", "English");
+            securityManager.Close();
         }
     }
 }
