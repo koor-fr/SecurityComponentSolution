@@ -21,7 +21,7 @@ namespace SecurityComponentTest
                 User user = userManager.CheckCredentials("root", "admin");
                 securityManager.Close();
 
-                Assert.AreEqual("root", user.Login);
+                Assert.AreEqual("root-", user.Login);
                 Assert.IsFalse(user.Disabled);
                 Assert.AreEqual(0u, user.ConsecutiveErrors);
             }
