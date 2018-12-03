@@ -12,8 +12,8 @@ namespace KooR.SecurityComponent.Impl
         private SqlConnection connection;
         private bool initialyOpen = false;
 
-        private SqlUserManager userManager;
-        private SqlRoleManager roleManager;
+        private readonly SqlUserManager userManager;
+        private readonly SqlRoleManager roleManager;
 
 
         /// <summary>
