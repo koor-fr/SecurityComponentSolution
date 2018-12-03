@@ -47,5 +47,12 @@ namespace SecurityComponentTest
             User user = userManager.CheckCredentials("Johnny", "English");
             securityManager.Close();
         }
+
+        [TestMethod, ExpectedException(typeof(DivideByZeroException))]
+        public void TestException()
+        {
+            int a = 0;
+            int result = 1 / a;
+        }
     }
 }

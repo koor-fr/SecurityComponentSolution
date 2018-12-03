@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using AnotherComponentTest.ManualMock;
 using KooR.AnotherComponent;
 using KooR.SecurityComponent;
@@ -7,9 +8,28 @@ using NSubstitute;
 
 namespace KooR.AnotherComponentTest
 {
+    class Demo
+    {
+        private int aField = 123;
+    }
+
+
     [TestClass]
     public class UnitTest1
     {
+
+        [TestMethod]
+        public void TestWhiteBox()
+        {
+            // --- On lance un test ---
+            Demo d = new Demo();
+
+            // --- On vérifie l'etat interne ---
+            Type metadata = d.GetType();
+            FieldInfo probe = metadata.GetField("aField", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            Assert.AreEqual(123, probe.GetValue(d));
+        }
 
         [TestMethod, TestCategory("CI")]
         public void TestDoSomething_ManualMock()
