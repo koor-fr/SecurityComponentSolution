@@ -48,11 +48,18 @@ namespace SecurityComponentTest
             securityManager.Close();
         }
 
-        [TestMethod, ExpectedException(typeof(DivideByZeroException))]
-        public void TestException()
+        [TestMethod]
+        public void TempTest()
         {
-            int a = 0;
-            int result = 1 / a;
+            ISecurityManager securityManager = new SqlSecurityManager(connection);
+            securityManager.OpenSession();
+            IRoleManager roleManager = securityManager.RoleManager;
+
+            Role role = roleManager.SelectRoleByName("demo");
+            roleManager.DeleteRole();
+
+            securityManager.Close();
         }
+
     }
 }

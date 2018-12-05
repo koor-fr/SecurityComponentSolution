@@ -93,7 +93,7 @@ namespace KooR.SecurityComponent.Impl
         }
 
 
-        /// <summary>
+        /*/// <summary>
         ///     Returns the next used primary key for the specified table and column.
         ///     Caution: the type of the specified column must be compatible with the int java type.
         /// </summary>
@@ -110,14 +110,14 @@ namespace KooR.SecurityComponent.Impl
                 string strSql = String.Format("SELECT max({0}) FROM {1}", columnName, tableName);
                 using (SqlCommand command = new SqlCommand(strSql, this.connection))
                 {
-                    nextIdentifier = (uint) command.ExecuteScalar();
+                    nextIdentifier = (uint) (int) command.ExecuteScalar();
                     return ++nextIdentifier;
                 }
             }
             catch ( Exception  exception ) {
                 throw new SecurityManagerException("Cannot compute next primary key", exception );
             }
-        }
+        }*/
 
 
         private class SqlUserManager : IUserManager
@@ -180,7 +180,7 @@ namespace KooR.SecurityComponent.Impl
 
                                 // Associated roles loading
                                 IRoleManager roleManager = this.securityManager.RoleManager;
-                                strSql = "SELECT IdRole FROM T_USER_ROLES WHERE IdUser=@identifier";
+                                strSql = "SELECT tr.* FROM T_USER_ROLES tur INNER JOIN T_ROLES tr ON tur.idRole=tr.idRole WHERE IdUser=@identifier";
                                 using (SqlCommand command2 = new SqlCommand(strSql, this.securityManager.connection))
                                 {
                                     command2.Parameters.AddWithValue("@identifier", (int)identifier);
@@ -188,7 +188,8 @@ namespace KooR.SecurityComponent.Impl
                                     {
                                         while (reader2.Read())
                                         {
-                                            user.AddRole(roleManager.SelectRoleById((uint)reader2.GetInt32(0)));
+                                            Role role = new Role((uint)reader2.GetInt32(0), reader2.GetString(1));
+                                            user.AddRole(role);
                                         }
                                     }
                                 }
@@ -312,109 +313,96 @@ namespace KooR.SecurityComponent.Impl
 
             public Role SelectRoleByName(string roleName)
             {
-                return null;
-                //try
-                //{
-                //    QString strSql = "SELECT idRole FROM T_ROLES WHERE RoleName=:roleName";
-                //    QSqlQuery query;
-                //    query.prepare(strSql);
-                //    query.bindValue(":roleName", roleName.c_str());
-                //    query.exec();
-
-                //    if (query.next())
-                //    {
-                //        uint roleIdentifier = query.value(0).toInt();
-                //        return RolePtr(new Role(roleIdentifier, roleName));
-                //    }
-                //}
-                //catch ( const std::exception &exception ) {
-                //    QString errorMessage = QString("Cannot select role %1: %2").arg(roleName.c_str()).arg(exception.what());
-                //    throw SecurityManagerException(errorMessage.toStdString());
-                //}
-
-                //QString errorMessage = QString("Role %1 not found").arg(roleName.c_str());
-                //throw SecurityManagerException(errorMessage.toStdString());
+                try
+                {
+                    string strSql = "SELECT idRole FROM T_ROLES WHERE roleName like @roleName";
+                    using (SqlCommand command = new SqlCommand(strSql, this.securityManager.connection))
+                    {
+                        command.Parameters.AddWithValue("@roleName", roleName);
+                        int roleIdentifier = (int) command.ExecuteScalar();
+                        return new Role((uint)roleIdentifier, roleName);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new SecurityManagerException("Cannot select role for name " + roleName, exception);
+                }
             }
 
 
             public Role InsertRole(string roleName)
             {
-                return null;
-                //bool roleExists = false;
-                //try
-                //{
-                //    QString strSql = "SELECT IdRole FROM T_ROLES WHERE RoleName=:roleName";
-                //    QSqlQuery query;
-                //    query.prepare(strSql);
-                //    query.bindValue(":roleName", roleName.c_str());
-                //    query.exec();
+                try
+                {
+                    string strSql = "SELECT IdRole FROM T_ROLES WHERE RoleName like @roleName";
+                    using (SqlCommand command = new SqlCommand(strSql, this.securityManager.connection))
+                    {
+                        command.Parameters.AddWithValue("@roleName", roleName);
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read()) throw new SecurityManagerException("Role " + roleName + " already registered");
+                        }
+                        
+                    }
+                }
+                catch ( Exception exception ) 
+                {
+                    throw new SecurityManagerException("Can't check the role existance: " + roleName, exception);
+                }
 
-                //    if (query.next()) roleExists = true;
-
-                //}
-                //catch ( const std::exception &exception ) {
-                //    QString errorMessage = QString("Can't check the role existance: %1").arg(exception.what());
-                //    throw SecurityManagerException(errorMessage.toStdString());
-                //}
-
-                //if (roleExists)
-                //{
-                //    QString errorMessage = QString("Role %1 already registered").arg(roleName.c_str());
-                //    throw RoleAlreadyRegisteredException(errorMessage.toStdString());
-                //}
-
-                //try
-                //{
-                //    uint primaryKey = getNextAvailablePrimaryKey("T_ROLES", "IdRole");
-                //    QString strSql = "INSERT INTO T_ROLES VALUES ( :pk, :roleName )";
-                //    QSqlQuery query;
-                //    query.prepare(strSql);
-                //    query.bindValue(":pk", primaryKey);
-                //    query.bindValue(":roleName", roleName.c_str());
-                //    if (!query.exec()) throw std::runtime_error("Bad primary key");
-
-                //    return RolePtr(new Role(primaryKey, roleName));
-                //}
-                //catch ( const std::exception &exception ) {
-                //    QString errorMessage = QString("Can't insert the role %1: %2").arg(roleName.c_str()).arg(exception.what());
-                //    throw SecurityManagerException(errorMessage.toStdString());
-                //}
+                try
+                {
+                    //uint primaryKey = securityManager.GetNextAvailablePrimaryKey("T_ROLES", "IdRole");
+                    string strSql = "INSERT INTO T_ROLES OUTPUT INSERTED.idRole VALUES ( @roleName )";
+                    using (SqlCommand command = new SqlCommand(strSql, this.securityManager.connection))
+                    {
+                        command.Parameters.AddWithValue("@roleName", roleName);
+                        int primaryKey = (int) command.ExecuteScalar();
+                        return new Role((uint)primaryKey, roleName);
+                    }
+                }
+                catch ( Exception exception )
+                {
+                    throw new SecurityManagerException("Can't insert the role " + roleName, exception);
+                }
             }
 
 
             public void UpdateRole(Role role)
             {
-                //try
-                //{
-                //    QString strSql = "UPDATE T_ROLES SET RoleName=:roleName WHERE IdRole=:idRole";
-                //    QSqlQuery query;
-                //    query.prepare(strSql);
-                //    query.bindValue(":idRole", role->getIdentifier());
-                //    query.bindValue(":roleName", role->getRoleName().c_str());
-                //    query.exec();
-                //}
-                //catch ( const std::exception &exception ) {
-                //    QString errorMessage = QString("Cannot update role with pk %1: %2").arg(role->getIdentifier()).arg(exception.what());
-                //    throw SecurityManagerException(errorMessage.toStdString());
-                //}
+                try
+                {
+                    string strSql = "UPDATE T_ROLES SET RoleName=@roleName WHERE IdRole=@idRole";
+                    using (SqlCommand command = new SqlCommand(strSql, this.securityManager.connection))
+                    {
+                        command.Parameters.AddWithValue("@idRole", (int)role.Identifier);
+                        command.Parameters.AddWithValue("@roleName", role.RoleName);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception exception)
+                {
+                    throw new SecurityManagerException("Cannot update role with pk " + role.Identifier, exception);
+                }
             }
 
 
             public void DeleteRole(Role role)
             {
-                //try
-                //{
-                //    QString strSql = "DELETE FROM T_ROLES WHERE IdRole=:idRole";
-                //    QSqlQuery query;
-                //    query.prepare(strSql);
-                //    query.bindValue(":idRole", role->getIdentifier());
-                //    query.exec();
-                //}
-                //catch ( const std::exception &exception ) {
-                //    QString errorMessage = QString("Cannot delete role %1: %2").arg(role->getRoleName().c_str()).arg(exception.what());
-                //    throw SecurityManagerException(errorMessage.toStdString());
-                //}
-                //}
+                try
+                {
+                    string strSql = "DELETE FROM T_ROLES WHERE IdRole=@idRole";
+                    using (SqlCommand command = new SqlCommand(strSql, this.securityManager.connection))
+                    {
+                        command.Parameters.AddWithValue("@idRole", (int)role.Identifier);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                catch ( Exception exception )
+                {
+                    throw new SecurityManagerException("Cannot delete role "+role.RoleName, exception);
+                }
+                
             }
         }
     }
