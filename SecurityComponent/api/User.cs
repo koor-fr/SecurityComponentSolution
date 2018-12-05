@@ -174,6 +174,21 @@ namespace KooR.SecurityComponent
         /// <summary>
         ///     Checks is this user is associated to the specified role.
         /// </summary>
+        /// <param name="roleName">The expected role name</param>
+        /// <returns>true is this user has the specified role, false otherwise.</returns>
+        public bool IsMemberOfRole(string roleName)
+        {
+            foreach (Role aRole in this.roles)
+            {
+                if (aRole.RoleName == roleName) return true;
+            }
+            return false;
+        }
+
+
+        /// <summary>
+        ///     Checks is this user is associated to the specified role.
+        /// </summary>
         /// <param name="role">The expected role</param>
         /// <returns>true is this user has the specified role, false otherwise.</returns>
         public bool IsMemberOfRole( Role role ) {

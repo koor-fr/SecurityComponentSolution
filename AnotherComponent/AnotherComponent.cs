@@ -32,8 +32,11 @@ namespace KooR.AnotherComponent
             IUserManager userManager = this.securityManager.UserManager;
             User user = userManager.CheckCredentials("root", "admin");
             Console.Out.WriteLine("DoSomething with " + user.Login);
+            if (user.IsMemberOfRole("admin"))
+            {
+                this.state = true;
+            }
             this.securityManager.Close();
-            this.state = true;
         }
 
         static void Main(string[] args)
@@ -47,7 +50,7 @@ namespace KooR.AnotherComponent
                 component.SecurityManager = dependency;
                 component.DoSomething();
             }
-
+           
         }
     }
 }
